@@ -7,7 +7,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
-from app.routers import health
+from app.models.country import Country  # 注册模型以便 create_all 建表
+from app.routers import health, country
 
 
 @asynccontextmanager
@@ -34,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(country.router, prefix="/countries", tags=["countries"])
 
 
 @app.get("/")

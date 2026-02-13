@@ -1,7 +1,8 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { GlobeIcon, LanguageIcon, UserIcon } from './Icons'
+import { AddCountryModal } from './AddCountryModal'
 
 interface LayoutProps {
   children: ReactNode
@@ -13,27 +14,45 @@ const tabPaths = [
   { path: '/sales-analysis', key: 'tab.sales' },
 ] as const
 
+const NEW_OPTION_VALUE = '__new__'
+
 export function Layout({ children }: LayoutProps) {
-  const { country, setCountry, countries, locale, toggleLocale, t } = useApp()
+  const { countryId, setCountry, countries, locale, toggleLocale, t, refreshCountries } = useApp()
+  const [modalOpen, setModalOpen] = useState(false)
+  const selectRef = useRef<HTMLSelectElement>(null)
+
+  const handleCountryChange = (value: string) => {
+    if (value === NEW_OPTION_VALUE) {
+      setModalOpen(true)
+      const fallback = countries[0]?.id ?? ''
+      if (selectRef.current) selectRef.current.value = String(countryId ?? fallback)
+      return
+    }
+    setCountry(value === '' ? null : value)
+  }
+
+  const handleModalSaved = () => {
+    refreshCountries()
+  }
 
   return (
     <div className="min-h-screen bg-white text-slate-800">
-      {/* 全宽顶部导航栏 */}
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
         <div className="flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6">
-          {/* 左侧：Logo + 国家选择 + Tabs */}
           <div className="flex min-w-0 flex-1 items-center gap-6">
             <img src="/saic-logo.svg" alt="上汽集团" className="h-9 w-auto shrink-0" width="36" height="36" />
             <div className="flex items-center gap-2">
               <GlobeIcon size={18} className="text-slate-500" />
               <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value as typeof country)}
+                ref={selectRef}
+                value={countryId ?? ''}
+                onChange={(e) => handleCountryChange(e.target.value)}
                 className="border-0 bg-transparent py-2 pr-6 text-sm font-medium text-slate-700 focus:outline-none focus:ring-0"
               >
+                <option value={NEW_OPTION_VALUE}>{t('country.add')}</option>
                 {countries.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {locale === 'zh' ? c.nameZh : c.nameEn}
+                  <option key={c.id} value={c.id}>
+                    {locale === 'zh' ? c.country_cn : c.country_en}
                   </option>
                 ))}
               </select>
@@ -56,8 +75,6 @@ export function Layout({ children }: LayoutProps) {
               ))}
             </nav>
           </div>
-
-          {/* 右侧：语言切换 + 用户管理 */}
           <div className="flex shrink-0 items-center gap-4">
             <button
               type="button"
@@ -78,9 +95,9 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </header>
-
-      {/* 全宽主内容区，无最大宽度限制 */}
       <main className="w-full px-4 py-6 sm:px-6">{children}</main>
+
+      <AddCountryModal open={modalOpen} onClose={() => setModalOpen(false)} onSaved={handleModalSaved} />
     </div>
   )
 }

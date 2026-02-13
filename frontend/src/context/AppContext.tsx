@@ -1,27 +1,16 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import { getCountries, type CountryItem } from '../api/countries'
 
 export type Locale = 'zh' | 'en'
 
-const COUNTRIES = [
-  { code: 'CN', nameZh: '中国', nameEn: 'China' },
-  { code: 'US', nameZh: '美国', nameEn: 'USA' },
-  { code: 'DE', nameZh: '德国', nameEn: 'Germany' },
-  { code: 'JP', nameZh: '日本', nameEn: 'Japan' },
-  { code: 'NL', nameZh: '荷兰', nameEn: 'Netherlands' },
-] as const
-
-type CountryCode = (typeof COUNTRIES)[number]['code']
-
-interface AppState {
-  country: CountryCode
+interface AppContextValue {
   locale: Locale
-}
-
-interface AppContextValue extends AppState {
-  setCountry: (code: CountryCode) => void
-  setLocale: (locale: Locale) => void
+  setLocale: (l: Locale) => void
   toggleLocale: () => void
-  countries: typeof COUNTRIES
+  countries: CountryItem[]
+  countryId: string | null
+  setCountry: (id: string | null) => void
+  refreshCountries: () => Promise<void>
   t: (key: string) => string
 }
 
@@ -38,6 +27,11 @@ const translations: Record<Locale, Record<string, string>> = {
     'config.content.placeholder': '在此查看车型配置与定价信息',
     'industry.placeholder': '行业资讯内容将在此展示',
     'sales.placeholder': '销量分析内容将在此展示',
+    'country.add': '+ 新增',
+    'country.nameZh': '中文名称',
+    'country.nameEn': '英文名称',
+    'country.save': '保存',
+    'country.cancel': '取消',
   },
   en: {
     'tab.industry': 'Industry News',
@@ -51,17 +45,37 @@ const translations: Record<Locale, Record<string, string>> = {
     'config.content.placeholder': 'View vehicle config and pricing here',
     'industry.placeholder': 'Industry news will be displayed here',
     'sales.placeholder': 'Sales analysis will be displayed here',
+    'country.add': '+ Add new',
+    'country.nameZh': 'Name (Chinese)',
+    'country.nameEn': 'Name (English)',
+    'country.save': 'Save',
+    'country.cancel': 'Cancel',
   },
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [country, setCountryState] = useState<CountryCode>('CN')
   const [locale, setLocaleState] = useState<Locale>('zh')
+  const [countries, setCountries] = useState<CountryItem[]>([])
+  const [countryId, setCountryId] = useState<string | null>(null)
 
-  const setCountry = useCallback((code: CountryCode) => {
-    setCountryState(code)
+  const refreshCountries = useCallback(async () => {
+    const list = await getCountries(locale)
+    setCountries(list)
+    setCountryId((prev) => {
+      if (prev === null && list.length > 0) return list[0].id
+      if (prev !== null && !list.some((c) => c.id === prev)) return list[0]?.id ?? null
+      return prev
+    })
+  }, [locale])
+
+  useEffect(() => {
+    refreshCountries()
+  }, [refreshCountries])
+
+  const setCountry = useCallback((id: number | null) => {
+    setCountryId(id)
   }, [])
 
   const setLocale = useCallback((l: Locale) => {
@@ -78,12 +92,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const value: AppContextValue = {
-    country,
     locale,
-    setCountry,
     setLocale,
     toggleLocale,
-    countries: COUNTRIES,
+    countries,
+    countryId,
+    setCountry,
+    refreshCountries,
     t,
   }
 
