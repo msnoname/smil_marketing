@@ -1,10 +1,13 @@
 """
-Supabase Postgres 数据库配置（SQLAlchemy 2.0，同步驱动）
+Supabase 相关配置：
+- Postgres 数据库：用 SUPABASE_DB_URL（连接串）+ SQLAlchemy
+- Storage：用 SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY + supabase 客户端
 """
 import os
-from dotenv import load_dotenv
+from typing import Any
 
-from sqlalchemy import create_engine
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 
 # 加载环境变量（从 .env 文件）
@@ -12,6 +15,31 @@ load_dotenv()
 
 # 从环境变量读取 Supabase Postgres 连接串
 SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+# Storage 客户端（仅在使用 Storage 时需要；未安装 supabase 或未配置时为 None）
+_supabase_storage_client: Any = None
+
+
+def get_supabase_storage_client() -> Any:
+    """获取 Supabase 客户端，用于 Storage API。需安装 supabase 并配置 SUPABASE_URL、SUPABASE_SERVICE_ROLE_KEY。"""
+    global _supabase_storage_client
+    if _supabase_storage_client is not None:
+        return _supabase_storage_client
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        raise RuntimeError(
+            "SUPABASE_URL 与 SUPABASE_SERVICE_ROLE_KEY 未配置。"
+            "请在 .env 中设置（Supabase 项目 URL 与 Service role key）。"
+        )
+    try:
+        from supabase import create_client  # type: ignore
+        _supabase_storage_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    except ImportError as e:
+        raise RuntimeError(
+            "未安装 supabase。请在 backend 目录执行: pip install -r requirements.txt"
+        ) from e
+    return _supabase_storage_client
 
 if not SUPABASE_DB_URL:
     raise RuntimeError(
@@ -36,9 +64,12 @@ class Base(DeclarativeBase):
 
 
 def init_db():
-    """创建表（如有 Base 子类）"""
-    # 注意：生产环境建议使用 Alembic 迁移工具，而不是 create_all
+    """创建表（如有 Base 子类），并确保 model 表有 original_url 列。"""
     Base.metadata.create_all(bind=engine)
+    # 为已有 model 表补充 original_url（新表 create_all 已包含）
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE model ADD COLUMN IF NOT EXISTS original_url VARCHAR(500)"))
+        conn.commit()
 
 
 def get_db():

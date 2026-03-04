@@ -15,6 +15,9 @@ venv/
 # DB (optional: commit or ignore)
 backend/db/*.db
 
+# Data
+backend/scripts/
+
 # Env
 .env
 .env.local

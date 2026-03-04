@@ -56,3 +56,21 @@ export function SearchIcon({ className = '', size = 20 }: IconProps) {
     </svg>
   )
 }
+
+export function ChevronLeftIcon({ className = '', size = 20 }: IconProps) {
+  const s = sizeClass(size)
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" style={s}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+    </svg>
+  )
+}
+
+export function ChevronRightIcon({ className = '', size = 20 }: IconProps) {
+  const s = sizeClass(size)
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" style={s}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}

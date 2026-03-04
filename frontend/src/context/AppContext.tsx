@@ -25,6 +25,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'config.search.placeholder': '搜索车型...',
     'config.content.title': '配置与定价',
     'config.content.placeholder': '在此查看车型配置与定价信息',
+    'config.sidebar.collapse': '收起侧边栏',
+    'config.sidebar.expand': '展开侧边栏',
     'industry.placeholder': '行业资讯内容将在此展示',
     'sales.placeholder': '销量分析内容将在此展示',
     'country.add': '+ 新增',
@@ -32,6 +34,14 @@ const translations: Record<Locale, Record<string, string>> = {
     'country.nameEn': '英文名称',
     'country.save': '保存',
     'country.cancel': '取消',
+    'model.addNew': '+ 新增',
+    'model.addModel': '新增车型',
+    'model.brandName': '品牌名称',
+    'model.name': '车型名称',
+    'model.year': '年款',
+    'model.upload': '上传文件',
+    'model.uploadHint': '将按所示顺序排列并合成一个 PDF，再进一步处理。可拖动调整顺序，点击预览。',
+    'model.preview': '预览',
   },
   en: {
     'tab.industry': 'Industry News',
@@ -43,6 +53,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'config.search.placeholder': 'Search vehicle model...',
     'config.content.title': 'Config & Pricing',
     'config.content.placeholder': 'View vehicle config and pricing here',
+    'config.sidebar.collapse': 'Collapse sidebar',
+    'config.sidebar.expand': 'Expand sidebar',
     'industry.placeholder': 'Industry news will be displayed here',
     'sales.placeholder': 'Sales analysis will be displayed here',
     'country.add': '+ Add new',
@@ -50,6 +62,14 @@ const translations: Record<Locale, Record<string, string>> = {
     'country.nameEn': 'Name (English)',
     'country.save': 'Save',
     'country.cancel': 'Cancel',
+    'model.addNew': '+ Add new',
+    'model.addModel': 'Add model',
+    'model.brandName': 'Brand name',
+    'model.name': 'Model name',
+    'model.year': 'Model year',
+    'model.upload': 'Upload files',
+    'model.uploadHint': 'Files will be merged in the order shown into one PDF for further processing. Drag to reorder, click to preview.',
+    'model.preview': 'Preview',
   },
 }
 
@@ -74,7 +94,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshCountries()
   }, [refreshCountries])
 
-  const setCountry = useCallback((id: number | null) => {
+  const setCountry = useCallback((id: string | null) => {
     setCountryId(id)
   }, [])
 

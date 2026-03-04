@@ -64,6 +64,13 @@ pip install -r requirements.txt
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+### 前端
+```bash
+cd frontend
+npm install   # 首次需安装依赖
+npm run dev
+```
+
 API 文档：http://localhost:8000/docs  
 前端通过 `/api/*` 代理到后端（见 `frontend/vite.config.ts`）。
 
