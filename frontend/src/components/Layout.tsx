@@ -1,12 +1,8 @@
-import { ReactNode, useState, useRef } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useState, useRef } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { GlobeIcon, LanguageIcon, UserIcon } from './Icons'
 import { AddCountryModal } from './AddCountryModal'
-
-interface LayoutProps {
-  children: ReactNode
-}
 
 const tabPaths = [
   { path: '/industry-news', key: 'tab.industry' },
@@ -16,16 +12,24 @@ const tabPaths = [
 
 const NEW_OPTION_VALUE = '__new__'
 
-export function Layout({ children }: LayoutProps) {
+export function Layout() {
   const { countryId, setCountry, countries, locale, toggleLocale, t, refreshCountries } = useApp()
+  const location = useLocation()
   const [modalOpen, setModalOpen] = useState(false)
+  const [blockCountrySwitchOpen, setBlockCountrySwitchOpen] = useState(false)
   const selectRef = useRef<HTMLSelectElement>(null)
+
+  const isOnEditPage = location.pathname === '/config-pricing/edit'
 
   const handleCountryChange = (value: string) => {
     if (value === NEW_OPTION_VALUE) {
       setModalOpen(true)
       const fallback = countries[0]?.id ?? ''
       if (selectRef.current) selectRef.current.value = String(countryId ?? fallback)
+      return
+    }
+    if (isOnEditPage) {
+      setBlockCountrySwitchOpen(true)
       return
     }
     setCountry(value === '' ? null : value)
@@ -62,6 +66,7 @@ export function Layout({ children }: LayoutProps) {
                 <NavLink
                   key={path}
                   to={path}
+                  end={path !== '/config-pricing'}
                   className={({ isActive }) =>
                     `px-4 py-2 text-sm font-medium transition-colors ${
                       isActive
@@ -95,9 +100,35 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </header>
-      <main className="w-full px-4 py-6 sm:px-6">{children}</main>
+      <main className="w-full px-4 py-6 sm:px-6">
+        <Outlet />
+      </main>
 
       <AddCountryModal open={modalOpen} onClose={() => setModalOpen(false)} onSaved={handleModalSaved} />
+
+      {blockCountrySwitchOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setBlockCountrySwitchOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-800">{t('editPage.blockCountrySwitch.title')}</h3>
+            <p className="mt-2 text-sm text-slate-600">{t('editPage.blockCountrySwitch.message')}</p>
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setBlockCountrySwitchOpen(false)}
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                {t('editPage.blockCountrySwitch.ok')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

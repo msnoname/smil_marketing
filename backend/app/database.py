@@ -69,6 +69,8 @@ def init_db():
     # 为已有 model 表补充 original_url（新表 create_all 已包含）
     with engine.connect() as conn:
         conn.execute(text("ALTER TABLE model ADD COLUMN IF NOT EXISTS original_url VARCHAR(500)"))
+        conn.execute(text("ALTER TABLE model ADD COLUMN IF NOT EXISTS cn_url VARCHAR(500)"))
+        conn.execute(text("ALTER TABLE model ADD COLUMN IF NOT EXISTS en_url VARCHAR(500)"))
         conn.commit()
 
 

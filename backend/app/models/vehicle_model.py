@@ -22,6 +22,8 @@ class VehicleModel(Base):
     model: Mapped[str] = mapped_column(String(200), nullable=False)
     model_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
     original_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cn_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    en_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 # class ModelFile(Base):

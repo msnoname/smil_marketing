@@ -20,3 +20,44 @@ def delete_file(storage_path: str) -> None:
     """从 bucket 删除指定路径文件。"""
     client = get_supabase_storage_client()
     client.storage.from_(BUCKET).remove([storage_path])
+
+
+def list_files_by_prefix(prefix: str) -> list[str]:
+    """列出 bucket 中指定前缀下的所有文件路径。prefix 如 'model_id'。"""
+    client = get_supabase_storage_client()
+    bucket = client.storage.from_(BUCKET)
+    base = prefix.rstrip("/")
+    try:
+        result = bucket.list(base, {"limit": 1000})
+    except Exception:
+        return []
+    paths: list[str] = []
+    for item in result:
+        name = item.get("name") if isinstance(item, dict) else getattr(item, "name", None)
+        if not name:
+            continue
+        full_path = f"{base}/{name}"
+        meta = item.get("metadata") if isinstance(item, dict) else getattr(item, "metadata", {}) or {}
+        mimetype = meta.get("mimetype") if isinstance(meta, dict) else None
+        if mimetype:
+            paths.append(full_path)
+        else:
+            try:
+                sub = bucket.list(full_path, {"limit": 1000})
+                for s in sub:
+                    n = s.get("name") if isinstance(s, dict) else getattr(s, "name", None)
+                    if n:
+                        paths.append(f"{full_path}/{n}")
+            except Exception:
+                pass
+    return paths
+
+
+def delete_prefix(prefix: str) -> None:
+    """删除 bucket 中指定前缀下的所有文件。先列出再批量删除。"""
+    paths = list_files_by_prefix(prefix)
+    if not paths:
+        return
+    client = get_supabase_storage_client()
+    bucket = client.storage.from_(BUCKET)
+    bucket.remove(paths)
